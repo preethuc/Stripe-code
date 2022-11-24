@@ -3,7 +3,7 @@ const stripe = require("stripe")(
 );
 
 //CREATE CUSTOMER
-exports.createCustomers = async (data) => {
+exports.createCustomers = async (data,method) => {
   console.log(data.name);
   let customerDetail = {
     email: data.email,
@@ -11,6 +11,7 @@ exports.createCustomers = async (data) => {
     address: {
       postal_code: "default",
     },
+    payment_method: method,
   };
   const customerData = await stripe.customers.create(customerDetail);
   console.log(customerData);
@@ -18,10 +19,12 @@ exports.createCustomers = async (data) => {
 };
 
 //CREATE PAYMENT-INTENT
-exports.paymentIntent = async () => {
+exports.paymentIntent = async (customer, card) => {
   let intentDetails = {
     amount: 100,
     currency: "usd",
+    customer: customer.id,
+
     payment_method_types: ["card"],
     setup_future_usage: "off_session",
     payment_method: card,
@@ -37,7 +40,7 @@ exports.paymentMethod = async () => {
   let paymentMethodDetails = {
     type: "card",
     card: {
-      number: "4242424242424242",
+      number: "4000003560000008",
       exp_month: 05,
       exp_year: 2026,
       cvc: "208",
@@ -50,22 +53,25 @@ exports.paymentMethod = async () => {
   return paymentMethodData;
 };
 
+
+
 //CREATE PRODUCT
-exports.createProduct = async () => {
-  let productParams = {
-    // name: product_name,
-    // description: product_description,
-    name: "pencil",
-    description: "nuivgyuvxc",
+exports.createProduct = async ({ product_name, product_description }) => {
+  let productDetails = {
+    name: product_name,
+    description: product_description,
+    // name: "pencil",
+    // description: "nuivgyuvxc",
   };
-  const productData = await stripe.products.create(productParams);
+  const productData = await stripe.products.create(productDetails);
   console.log(productData);
   return productData;
 };
 
 // CREATE PRICE FOR PRODUCT
-exports.createPrice = async () => {
-  let priceParams = {
+exports.createPrice = async ({ currency, price, interval, interval_count },
+  { id }) => {
+  let priceDetails = {
     unit_amount: price * 100,
     currency: currency,
     recurring: {
@@ -75,13 +81,13 @@ exports.createPrice = async () => {
     product: id,
   };
 
-  const priceData = await stripe.prices.create(priceParams);
+  const priceData = await stripe.prices.create(priceDetails);
   console.log(priceData);
   return priceData;
 };
 
 //CREATE SUBSCRIPTION
-exports.subscription = async () => {
+exports.subscription = async ({ price, trial_period_days },card, { id }) => {
   let subscriptionDetails = {
     customer: id,
     items: [{ price: price }],
